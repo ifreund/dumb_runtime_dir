@@ -6,7 +6,7 @@
  * last logout. This keeps things simple and predictable.
  *
  * The user is responsible for ensuring that the RUNTIME_DIR_PARENT directory,
- * (/run/user by default) exists.
+ * (/run/user by default) exists and is only writable by root.
  *
  * Copyright 2021 Isaac Freund
  *
