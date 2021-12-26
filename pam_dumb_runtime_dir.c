@@ -27,6 +27,7 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <security/pam_modules.h>
