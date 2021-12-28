@@ -17,7 +17,7 @@ install: pam_dumb_runtime_dir.so
 	cp pam_dumb_runtime_dir.so "$(DESTDIR)$(PREFIX)/lib/security"
 
 uninstall:
-	rm pam_dumb_runtime_dir.so "$(DESTDIR)$(PREFIX)/lib/security"
+	rm "$(DESTDIR)$(PREFIX)/lib/security/pam_dumb_runtime_dir.so"
 
 clean:
 	rm pam_dumb_runtime_dir.so
