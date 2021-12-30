@@ -5,8 +5,9 @@ CFLAGS ?= -Os -Wall -Wextra -Wpedantic -Wconversion -Werror
 RUNTIME_DIR_PARENT ?= "\"/run/user\""
 
 pam_dumb_runtime_dir.so:
-	$(CC) -o $@ pam_dumb_runtime_dir.c -lpam -shared -fPIC -std=c99 $(CFLAGS) \
-		-DRUNTIME_DIR_PARENT=$(RUNTIME_DIR_PARENT)
+	$(CC) -o $@ pam_dumb_runtime_dir.c -lpam -lpam_misc -shared -fPIC \
+	      -std=c99 $(CFLAGS) -D_GNU_SOURCE \
+	      -DRUNTIME_DIR_PARENT=$(RUNTIME_DIR_PARENT)
 
 .PHONY: all install uninstall clean
 

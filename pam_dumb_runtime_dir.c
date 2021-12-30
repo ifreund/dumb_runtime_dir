@@ -9,6 +9,7 @@
  * (/run/user by default) exists and is only writable by root.
  *
  * Copyright 2021 Isaac Freund
+ * Copyright 2021 Guilherme Janczak
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted.
@@ -22,14 +23,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <assert.h>
 #include <errno.h>
 #include <pwd.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
+#include <security/pam_misc.h>
 #include <security/pam_modules.h>
 
 int pam_sm_open_session(pam_handle_t *pamh, int flags,
@@ -38,43 +39,50 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	(void)argc;
 	(void)argv;
 
+	int rval = PAM_SESSION_ERR;
+
 	const char *user;
 	if (pam_get_user(pamh, &user, NULL) != PAM_SUCCESS) {
-		return PAM_SESSION_ERR;
+		return rval;
 	}
 
 	struct passwd *pw = getpwnam(user);
 	if (pw == NULL) {
-		return PAM_SESSION_ERR;
+		return rval;
 	}
 
-	/* The bit size of uid_t will always be larger than the number of
-	 * bytes needed to print it. */
-	char buffer[sizeof("XDG_RUNTIME_DIR="RUNTIME_DIR_PARENT"/") +
-		sizeof(uid_t) * 8];
-	int ret = snprintf(buffer, sizeof(buffer),
-		"XDG_RUNTIME_DIR="RUNTIME_DIR_PARENT"/%d", pw->pw_uid);
-	assert(ret >= 0 && (size_t)ret < sizeof(buffer));
-	const char *path = buffer + sizeof("XDG_RUNTIME_DIR=") - 1;
-
+	char *path;
+	/*
+	 * Adjacent string literals are combined into one as per the C standard.
+	 * Appending the null string to the macro RUNTIME_DIR_PARENT will cause
+	 * a syntax error if whoever compiles this program defines it to
+	 * something other than a string.
+	 */
+	if (asprintf(&path, "%s/%jd", RUNTIME_DIR_PARENT "",
+	    (intmax_t)pw->pw_uid) == -1) {
+		return rval;
+	}
 	if (mkdir(path, 0700) < 0) {
 		/* It's ok if the directory already exists, in that case we just
 		 * ensure the mode is correct before we chown(). */
 		if (errno != EEXIST) {
-			return PAM_SESSION_ERR;
+			goto end;
 		}
 		if (chmod(path, 0700) < 0) {
-			return PAM_SESSION_ERR;
+			goto end;
 		}
 	}
 
 	if (chown(path, pw->pw_uid, pw->pw_gid) < 0) {
-		return PAM_SESSION_ERR;
+		goto end;
 	}
 
-	if (pam_putenv(pamh, buffer) != PAM_SUCCESS) {
-		return PAM_SESSION_ERR;
+	if (pam_misc_setenv(pamh, "XDG_RUNTIME_DIR", path, 1) != PAM_SUCCESS) {
+		goto end;
 	}
 
-	return PAM_SUCCESS;
+	rval = PAM_SUCCESS;
+end:
+	free(path);
+	return rval;
 }
