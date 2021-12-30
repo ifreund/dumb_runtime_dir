@@ -25,9 +25,9 @@
 #include <assert.h>
 #include <errno.h>
 #include <pwd.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include <security/pam_modules.h>
@@ -48,12 +48,15 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		return PAM_SESSION_ERR;
 	}
 
-	/* The bit size of uid_t will always be larger than the number of
+	/* The bit size of uintmax_t will always be larger than the number of
 	 * bytes needed to print it. */
 	char buffer[sizeof("XDG_RUNTIME_DIR="RUNTIME_DIR_PARENT"/") +
-		sizeof(uid_t) * 8];
+		sizeof(uintmax_t) * 8];
+	/* Valid UIDs are always positive even if POSIX allows the uid_t type
+	 * itself to be signed. Therefore, we can convert to uintmax_t for
+	 * safe formatting. */
 	int ret = snprintf(buffer, sizeof(buffer),
-		"XDG_RUNTIME_DIR="RUNTIME_DIR_PARENT"/%d", pw->pw_uid);
+		"XDG_RUNTIME_DIR="RUNTIME_DIR_PARENT"/%ju", (uintmax_t)pw->pw_uid);
 	assert(ret >= 0 && (size_t)ret < sizeof(buffer));
 	const char *path = buffer + sizeof("XDG_RUNTIME_DIR=") - 1;
 
