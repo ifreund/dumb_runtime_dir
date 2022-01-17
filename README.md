@@ -10,7 +10,7 @@ The user is responsible for ensuring that the `RUNTIME_DIR_PARENT` directory
 ## PAM configuration
 
 To enable the pam module, add the following recommended configuration to
-`/etc/pam.d/login`:
+`/etc/pam.d/system-login`:
 
 ```
 session		optional	pam_dumb_runtime_dir.so
