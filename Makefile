@@ -1,23 +1,26 @@
-PREFIX ?= /usr
-CC ?= cc
-CFLAGS ?= -Os -Wall -Wextra -Wpedantic -Wconversion -Werror
+PREFIX = /usr
+PAMDIR = $(PREFIX)/lib/security
 
-RUNTIME_DIR_PARENT ?= "\"/run/user\""
+CC = cc
+CFLAGS = -Os -Wall -Wextra -Wpedantic -Wconversion -Werror
+PAMFLAGS = $$(pkg-config --cflags --libs pam)
 
-pam_dumb_runtime_dir.so:
-	$(CC) -o $@ pam_dumb_runtime_dir.c -lpam -shared -fPIC -std=c99 $(CFLAGS) \
-		-DRUNTIME_DIR_PARENT=$(RUNTIME_DIR_PARENT)
+RUNTIME_DIR_PARENT = /run/user
+
+pam_dumb_runtime_dir.so: pam_dumb_runtime_dir.c
+	$(CC) -o $@ pam_dumb_runtime_dir.c $(PAMFLAGS) -shared -fPIC -std=c99 $(CFLAGS) \
+		'-DRUNTIME_DIR_PARENT="$(RUNTIME_DIR_PARENT)"'
 
 .PHONY: all install uninstall clean
 
 all: pam_dumb_runtime_dir.so
 
 install: pam_dumb_runtime_dir.so
-	mkdir -p "$(DESTDIR)$(PREFIX)/lib/security"
-	cp pam_dumb_runtime_dir.so "$(DESTDIR)$(PREFIX)/lib/security"
+	mkdir -p $(DESTDIR)$(PAMDIR)
+	cp -f pam_dumb_runtime_dir.so $(DESTDIR)$(PAMDIR)
 
 uninstall:
-	rm "$(DESTDIR)$(PREFIX)/lib/security/pam_dumb_runtime_dir.so"
+	rm -f $(DESTDIR)$(PAMDIR)/pam_dumb_runtime_dir.so
 
 clean:
-	rm pam_dumb_runtime_dir.so
+	rm -f pam_dumb_runtime_dir.so
