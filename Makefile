@@ -8,7 +8,8 @@ PAMFLAGS = $$(pkg-config --cflags --libs pam)
 RUNTIME_DIR_PARENT = /run/user
 
 pam_dumb_runtime_dir.so: pam_dumb_runtime_dir.c
-	$(CC) -o $@ pam_dumb_runtime_dir.c $(PAMFLAGS) -shared -fPIC -std=c99 $(CFLAGS) \
+	$(CC) -o $@ pam_dumb_runtime_dir.c -shared -fPIC -std=c99 \
+		$(PAMFLAGS) $(CFLAGS) $(LDFLAGS) \
 		'-DRUNTIME_DIR_PARENT="$(RUNTIME_DIR_PARENT)"'
 
 .PHONY: all install uninstall clean
