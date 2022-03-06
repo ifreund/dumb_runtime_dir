@@ -81,3 +81,16 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
 
 	return PAM_SUCCESS;
 }
+
+/* PAM requires all functions in a group to be defined, even if a noop is
+ * desired. Otherwise, PAM_MODULE_UNKNOWN is returned when the application
+ * calls pam_close_session(3). */
+int pam_sm_close_session(pam_handle_t *pamh, int flags,
+		int argc, const char **argv) {
+	(void)pamh;
+	(void)flags;
+	(void)argc;
+	(void)argv;
+
+	return PAM_SUCCESS;
+}
